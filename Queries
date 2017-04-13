@@ -71,6 +71,7 @@ from (person join household on (person.serialNo = household.serialNo and person.
 where communities.name = x and person.year = y and mig = 2
 group by communities.name;
 
+
  
 IF STATE:
 select states.name, Count(mig)/(select Count(mig) from ((person join household on (person.serialNo = household.serialNo and person.year 
@@ -81,6 +82,31 @@ from ((person join household on (person.serialNo = household.serialNo and person
   states.stateID and communities.year = states.year)
 where states.name = x and person.year = y and mig = 2
 group by states.name;
+
+------------------------------------------------------------------COMMUNITY MIGRATION--------------------------------------------------------
+select communities.name, Count(mig)/(select Count(mig) from (person join household on (person.serialNo = household.serialNo and 
+  person.year = household.year)) join communities on (household.PUMA = communities.communityID and household.year= communities.year)
+  where communities.name = 'Citrus County' and person.year = 2014)*100 as percentMigrant
+from (person join household on (person.serialNo = household.serialNo and person.year = household.year)) join communities on 
+  (household.PUMA = communities.communityID and household.year= communities.year)
+where communities.name = 'Citrus County' and person.year = 2014 and mig = 2 
+group by communities.name;
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+------------------------------------------------------------------STATE MIGRATION--------------------------------------------------------
+select states.name, Count(mig)/(select Count(mig) from ((person join household on (person.serialNo = household.serialNo and person.year 
+  = household.year)) join communities on (household.PUMA = communities.communityID and household.year= communities.year)) join states on
+  (communities.belongsTo = states.stateID and communities.year = states.year) where states.name = x and person.year = yc)*100 as percentMigrant
+from ((person join household on (person.serialNo = household.serialNo and person.year = household.year)) join communities on 
+  (household.PUMA = communities.communityID and household.year= communities.year)) join states on (communities.belongsTo = 
+  states.stateID and communities.year = states.year)
+where states.name = x and person.year = y and mig = 2
+group by states.name;
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+
 
 OTHER QUERIES:
 
@@ -247,3 +273,121 @@ from person join household on (person.serialNo = household.serialNo and  person.
     (communities.BELONGSTO = states.stateID and communities.year = states.year)
 where states.name = x  and person.year = y
 group by states.name;
+
+--------------------------------------------------------PUMA AVERAGE INCOME---------------------------------------------------------------------------------
+with T AS (select * from income, household, communities
+where income.iserialno=household.serialno
+AND communities.communityid=household.puma
+AND communities.year = income.year
+AND household.year= income.year
+AND communities.name = 'Citrus County'
+AND communities.year = '2015'
+)
+
+select avg(pincome) from 
+(select (retirement+interest+wages+assist+ss+disability+sinc) as pincome, iserialno 
+from (select sum(retp) retirement, 
+sum(intp) interest, 
+sum(wagp) wages, 
+sum(pap) assist, 
+sum(ssp) ss, 
+sum(ssip) disability, 
+sum(semp)sinc,
+np,
+iserialno from T 
+group by iserialno, np)) ;
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+---------------------------------------------------------STATE AVERAGE INCOME------------------------------------------------------------------------------------
+with T AS (select * from income, household, communities
+where income.iserialno=household.serialno
+AND communities.communityid=household.puma
+AND communities.year = income.year
+AND household.year= income.year
+AND communities.year = '2015'
+)
+
+select avg(pincome) from 
+(select (retirement+interest+wages+assist+ss+disability+sinc) as pincome, iserialno 
+from (select sum(retp) retirement, 
+sum(intp) interest, 
+sum(wagp) wages, 
+sum(pap) assist, 
+sum(ssp) ss, 
+sum(ssip) disability, 
+sum(semp)sinc,
+np,
+iserialno from T 
+group by iserialno, np)) ;
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+------------------------------------------------------------------PUMA MEDIAN INCOME-----------------------------------------------------------------------------
+with T AS (select * from income, household, communities
+where income.iserialno=household.serialno
+AND communities.communityid=household.puma
+AND communities.year = income.year
+AND household.year= income.year
+AND communities.name = 'Citrus County'
+AND communities.year = '2015'
+)
+
+select median(pincome) from 
+(select (retirement+interest+wages+assist+ss+disability+sinc) as pincome, iserialno 
+from (select sum(retp) retirement, 
+sum(intp) interest, 
+sum(wagp) wages, 
+sum(pap) assist, 
+sum(ssp) ss, 
+sum(ssip) disability, 
+sum(semp)sinc,
+np,
+iserialno from T 
+group by iserialno, np)) ;
+--------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+---------------------------------------------------------STATE MEDIAN INCOME-------------------------------------------------------------------
+with T AS (select * from income, household, communities
+where income.iserialno=household.serialno
+AND communities.communityid=household.puma
+AND communities.year = income.year
+AND household.year= income.year
+AND communities.year = '2015'
+)
+
+select median(pincome) from 
+(select (retirement+interest+wages+assist+ss+disability+sinc) as pincome, iserialno 
+from (select sum(retp) retirement, 
+sum(intp) interest, 
+sum(wagp) wages, 
+sum(pap) assist, 
+sum(ssp) ss, 
+sum(ssip) disability, 
+sum(semp)sinc,
+np,
+iserialno from T 
+group by iserialno, np)) ;
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+-------------------------------------------------------------TOTAL TUPLES--------------------------------------------------------------------------------------------
+select
+(select count(household.serialno) from household)+
+(select count(communities.communityid) from communities)+
+(select count(income.iserialno) from income)+
+(select count(industry.industryid) from industry)+
+(select count(person.serialno) from person)+
+(select count(primarylanguage.languageid) from primarylanguage)+
+(select count(states.stateid) from states) as total from COMMUNITIES, Household, income, industry, person, primarylanguage, states where rownum=1;
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
