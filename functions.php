@@ -292,7 +292,7 @@ $array2 = array();
             return $data;
     }
 
-    function performQueryCompare1($dataseries, $areaname, $year, $conn, $i) {
+    function performQueryCompare1($dataseries, $areaname, $year, $conn, $i, $array1) {
         if($dataseries == 'Median Age') {
             $q = "";
             if($areaname == 'Florida') {
@@ -550,20 +550,21 @@ $array2 = array();
             oci_execute($stid);
         }
         while(oci_fetch($stid)) {
-            $data = $name;
-            $GLOBALS['array1'][$i] = $data;
+            $array1[$i] = $name;
+            // $GLOBALS['array1'][$i] = $name;
         }
         
         if(is_null($data)) {
-            $GLOBALS['array1'][0] == 88;
+           $array1[0] = 88;
+           // $GLOBALS['array1'][0] == 88;
         }
         //$GLOBALS['array1'][0] == 88;
         oci_free_statement($stid);
 
-            return $data;
+        return $array1[$i];
     }
 
-    function performQueryCompare2($dataseries, $areaname, $year, $conn, $i) {
+    function performQueryCompare2($dataseries, $areaname, $year, $conn, $i, $array2) {
         if($dataseries == 'Median Age') {
             $q = "";
             if($areaname == 'Florida') {
@@ -821,17 +822,18 @@ $array2 = array();
             oci_execute($stid);
         }
         while(oci_fetch($stid)) {
-            $data = $name;
-            $GLOBALS['array2'][$i] = $data;
+           $array2[$i] = $name;
+           // $GLOBALS['array2'][$i] = $data;
         }
         
         if(is_null($data)) {
-            $GLOBALS['array2'][0] == 88;
+            $array2[0] = 88;
+            //$GLOBALS['array2'][0] == 88;
         }
         //$GLOBALS['array2'][0] == 88;
         oci_free_statement($stid);
 
-            return $data;
+        return $array2[$i];
     }
 
 
@@ -867,17 +869,28 @@ $array2 = array();
         //$var3 is the first data series to compare
         //$var4 is the second data series to compare
 
+        $array1 = array();
+        $array2 = array();
+        $year = 2012;
+
         for($i = 0; $i <= 3; $i++) {
-            $data = performQueryCompare1($var3, $var1, 2012+$i, $conn, $i);
+            performQueryCompare1($var3, $var1, $year, $conn, $i, $array1);
+            $year = $year + $i;
             //$GLOBALS['array1'][$i] = $data;
             //$array1[$i] = $data;
         }
 
+         $year = 2012;
         for($i = 0; $i <= 3; $i++) {
-            $data = performQueryCompare2($var4, $var2, 2012+$i, $conn, $i);
+            $array2 = performQueryCompare2($var4, $var2, $year, $conn, $i, $array2);
+             $year = $year + $i;
+           
             //$GLOBALS['array2'][$i] = $data;
             //$array2[$i] = $data;
         }
+
+        print($array1);
+        print($array2);
 
         // while(oci_fetch($stid1)) {
         //     $array1[] = $name1;
@@ -891,7 +904,8 @@ $array2 = array();
         //     $array2[] = $name2;
         // }
 
-        $data = Correlation($GLOBALS['array1'], $GLOBALS['array2']);
+        // $data = Correlation($GLOBALS['array1'], $GLOBALS['array2']);
+         $data = Correlation($array1, $array2);
         echo $data;
 
         //oci_free_statement($stid1);
