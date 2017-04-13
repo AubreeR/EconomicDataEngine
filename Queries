@@ -278,7 +278,8 @@ AND communities.year = 'insert year here'
 
 --select (retirement+interest+wages+assist+ss+disability+sinc), iserialno 
 select count(distinct iserialno)/(select Count(distinct household.serialNo) from household join community on (household.PUMA = 
-  communities.communityID and household.year = communities.year) where communities.name = 'insert name here' and communities.year = 'year'
+  communities.communityID and household.year = communities.year) where communities.name = 'insert name here' and 
+  communities.year = 'year')*100
 from (select sum(retp) retirement, 
 sum(intp) interest, 
 sum(wagp) wages, 
