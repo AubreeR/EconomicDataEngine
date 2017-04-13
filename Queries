@@ -353,3 +353,15 @@ iserialno from T
 group by iserialno, np)) ;
 -----------------------------------------------------------------------------------------------------------------------------------------
 
+
+
+-------------------------------------------------------------TOTAL TUPLES--------------------------------------------------------------------------------------------
+select
+(select count(household.serialno) from household)+
+(select count(communities.communityid) from communities)+
+(select count(income.iserialno) from income)+
+(select count(industry.industryid) from industry)+
+(select count(person.serialno) from person)+
+(select count(primarylanguage.languageid) from primarylanguage)+
+(select count(states.stateid) from states) as total from COMMUNITIES, Household, income, industry, person, primarylanguage, states where rownum=1;
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
