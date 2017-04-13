@@ -95,10 +95,12 @@ IF COMMUNITY:
    having (Count(distinct i1.personalID) - Count(distinct i2.personalID)) = 
     MAX(COUNT(distinct i1.personalID) - COUNT(distinct i2.personalID));
     
-select communities.name, Count(mig)
+select communities.name, Count(mig)/(select Count(mig) from (person join household on (person.serialNo = household.serialNo and 
+  person.year = household.year)) join communities on (household.PUMA = communities.communityID and household.year= communities.year)
+  where communities.name = x and person.year = y)*100
 from (person join household on (person.serialNo = household.serialNo and person.year = household.year)) join communities on 
   (household.PUMA = communities.communityID and household.year= communities.year)
-where communities.name = 'South Rhode Island--Washington County' and person.year = 2012 and mig = 2
+where communities.name = x and person.year = y and mig = 2
 group by communities.name;
 
  
@@ -116,11 +118,13 @@ IF STATE:
    having (Count(distinct i1.personalID) - Count(distinct i2.personalID)) = 
     MAX(COUNT(distinct i1.personalID) - COUNT(distinct i2.personalID));
 
-select states.name, Count(mig)
+select states.name, Count(mig)/(select Count(mig) from ((person join household on (person.serialNo = household.serialNo and person.year 
+  = household.year)) join communities on (household.PUMA = communities.communityID and household.year= communities.year)) join states on
+  (communities.belongsTo = states.stateID and communities.year = states.year) where states.name = x and person.year = yc)*100
 from ((person join household on (person.serialNo = household.serialNo and person.year = household.year)) join communities on 
   (household.PUMA = communities.communityID and household.year= communities.year)) join states on (communities.belongsTo = 
   states.stateID and communities.year = states.year)
-where states.name = 'Rhode Island' and person.year = 2012 and mig = 2
+where states.name = x and person.year = y and mig = 2
 group by states.name;
 
 2. Poverty
@@ -259,3 +263,38 @@ AND communities.year=2013)
 select n1 from ((select n1, n2, i2-i1 from (select iname n1, count(industryid)i1 from T group by industryid, iname)
 , (select iname n2, count(industryid)i2 from X group by industryid, iname) where n1=n2) order by i2-i1 desc) 
 where rownum = 1;
+
+
+ --this gives the number of households in poverty in a given community
+with T AS (select * from income, household, communities
+where income.iserialno=household.serialno
+AND communities.communityid=household.puma
+AND communities.year = income.year
+AND household.year= income.year
+AND communities.name = 'insert name here'
+AND communities.year = 'insert year here'
+)
+
+
+--select (retirement+interest+wages+assist+ss+disability+sinc), iserialno 
+select count(distinct iserialno)/(select Count(distinct household.serialNo) from household join community on (household.PUMA = 
+  communities.communityID and household.year = communities.year) where communities.name = 'insert name here' and 
+  communities.year = 'year')*100
+from (select sum(retp) retirement, 
+sum(intp) interest, 
+sum(wagp) wages, 
+sum(pap) assist, 
+sum(ssp) ss, 
+sum(ssip) disability, 
+sum(semp)sinc,
+np,
+iserialno from T 
+group by iserialno, np) 
+
+where (retirement+interest+wages+assist+ss+disability+sinc)
+< 
+(POWER( np, 5)*3.7481 -
+70.284 * power(np,4) +
+413.55 * power(np,3) 
+- 609.44 * power(np,2) +
+2871.7*np + 9144.7);
