@@ -274,25 +274,25 @@ from person join household on (person.serialNo = household.serialNo and  person.
 where states.name = x  and person.year = y
 group by states.name;
 
---------------------------------------------------------PUMA AVERAGE INCOME---------------------------------------------------------------------------------
+-----------------------------------------------------------------------PUMA AVERAGE INCOME-------------------------------------------------------------------------------------------------------------------------------------------
 with T AS (select * from income, household, communities
 where income.iserialno=household.serialno
 AND communities.communityid=household.puma
 AND communities.year = income.year
 AND household.year= income.year
 AND communities.name = 'Citrus County'
-AND communities.year = '2015'
+AND communities.year = '2014'
 )
 
 select avg(pincome) from 
 (select (retirement+interest+wages+assist+ss+disability+sinc) as pincome, iserialno 
-from (select sum(retp) retirement, 
-sum(intp) interest, 
-sum(wagp) wages, 
-sum(pap) assist, 
-sum(ssp) ss, 
-sum(ssip) disability, 
-sum(semp)sinc,
+from (select sum(coalesce(retp,0)) retirement, 
+sum(coalesce(intp,0)) interest, 
+sum(coalesce(WAGP,0)) wages, 
+sum(coalesce(pap,0)) assist, 
+sum(coalesce(ssp,0)) ss, 
+sum(coalesce(ssip,0)) disability, 
+sum(coalesce(semp,0))sinc,
 np,
 iserialno from T 
 group by iserialno, np)) ;
@@ -302,52 +302,48 @@ group by iserialno, np)) ;
 
 
 
----------------------------------------------------------STATE AVERAGE INCOME------------------------------------------------------------------------------------
+--------------------------------------------------------------------STATE AVERAGE INCOME-------------------------------------------------------------------------------------------------------------------------------------------
 with T AS (select * from income, household, communities
 where income.iserialno=household.serialno
 AND communities.communityid=household.puma
 AND communities.year = income.year
 AND household.year= income.year
-AND communities.year = '2015'
+AND communities.year = '2014'
 )
 
 select avg(pincome) from 
 (select (retirement+interest+wages+assist+ss+disability+sinc) as pincome, iserialno 
-from (select sum(retp) retirement, 
-sum(intp) interest, 
-sum(wagp) wages, 
-sum(pap) assist, 
-sum(ssp) ss, 
-sum(ssip) disability, 
-sum(semp)sinc,
+from (select sum(coalesce(retp,0)) retirement, 
+sum(coalesce(intp,0)) interest, 
+sum(coalesce(WAGP,0)) wages, 
+sum(coalesce(pap,0)) assist, 
+sum(coalesce(ssp,0)) ss, 
+sum(coalesce(ssip,0)) disability, 
+sum(coalesce(semp,0))sinc,
 np,
 iserialno from T 
 group by iserialno, np)) ;
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
-
-
-
-------------------------------------------------------------------PUMA MEDIAN INCOME-----------------------------------------------------------------------------
+-----------------------------------------------------------------COMMUNITY MEDIAN INCOME------------------------------------------------------------------------------------------------------------------------------------------
 with T AS (select * from income, household, communities
 where income.iserialno=household.serialno
 AND communities.communityid=household.puma
 AND communities.year = income.year
 AND household.year= income.year
 AND communities.name = 'Citrus County'
-AND communities.year = '2015'
+AND communities.year = '2014'
 )
 
 select median(pincome) from 
 (select (retirement+interest+wages+assist+ss+disability+sinc) as pincome, iserialno 
-from (select sum(retp) retirement, 
-sum(intp) interest, 
-sum(wagp) wages, 
-sum(pap) assist, 
-sum(ssp) ss, 
-sum(ssip) disability, 
-sum(semp)sinc,
+from (select sum(coalesce(retp,0)) retirement, 
+sum(coalesce(intp,0)) interest, 
+sum(coalesce(WAGP,0)) wages, 
+sum(coalesce(pap,0)) assist, 
+sum(coalesce(ssp,0)) ss, 
+sum(coalesce(ssip,0)) disability, 
+sum(coalesce(semp,0))sinc,
 np,
 iserialno from T 
 group by iserialno, np)) ;
@@ -356,7 +352,7 @@ group by iserialno, np)) ;
 
 
 
----------------------------------------------------------STATE MEDIAN INCOME-------------------------------------------------------------------
+-----------------------------------------------------------------STATE MEDIAN INCOME-----------------------------------------------------------------------------------------------------------------------------
 with T AS (select * from income, household, communities
 where income.iserialno=household.serialno
 AND communities.communityid=household.puma
@@ -367,18 +363,17 @@ AND communities.year = '2015'
 
 select median(pincome) from 
 (select (retirement+interest+wages+assist+ss+disability+sinc) as pincome, iserialno 
-from (select sum(retp) retirement, 
-sum(intp) interest, 
-sum(wagp) wages, 
-sum(pap) assist, 
-sum(ssp) ss, 
-sum(ssip) disability, 
-sum(semp)sinc,
+from (select sum(coalesce(retp,0)) retirement, 
+sum(coalesce(intp,0)) interest, 
+sum(coalesce(WAGP,0)) wages, 
+sum(coalesce(pap,0)) assist, 
+sum(coalesce(ssp,0)) ss, 
+sum(coalesce(ssip,0)) disability, 
+sum(coalesce(semp,0))sinc,
 np,
 iserialno from T 
 group by iserialno, np)) ;
------------------------------------------------------------------------------------------------------------------------------------------
-
+-----------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 -------------------------------------------------------------TOTAL TUPLES--------------------------------------------------------------------------------------------
@@ -391,3 +386,70 @@ select
 (select count(primarylanguage.languageid) from primarylanguage)+
 (select count(states.stateid) from states) as total from COMMUNITIES, Household, income, industry, person, primarylanguage, states where rownum=1;
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------COMMUNITY POVERTY RATE------------------------------------------------------------------------------------------
+ --this gives the number of households in poverty in a given community
+with T AS (select * from income, household, communities
+where income.iserialno=household.serialno
+AND communities.communityid=household.puma
+AND communities.year = income.year
+AND household.year= income.year
+AND communities.name = 'Citrus County'
+AND communities.year = 2012
+)
+select (numer/ denom)*100
+from (select count(distinct iserialno) as numer
+from (select sum(coalesce(retp,0)) retirement, 
+sum(coalesce(intp,0)) interest, 
+sum(coalesce(WAGP,0)) wages, 
+sum(coalesce(pap,0)) assist, 
+sum(coalesce(ssp,0)) ss, 
+sum(coalesce(ssip,0)) disability, 
+sum(coalesce(semp,0))sinc,
+np,
+iserialno from T 
+group by iserialno, np)
+where (retirement+interest+wages+assist+ss+disability+sinc)
+< 
+(POWER( np, 5)*3.7481 -
+70.284 * power(np,4) +
+413.55 * power(np,3) 
+- 609.44 * power(np,2) +
+2871.7*np + 9144.7)), (select Count(distinct serialNo) as denom from T);
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+-------------------------------------------------------------------STATE POVERTY------------------------------------------------------------------------------------
+with T AS (select * from income, household, communities
+where income.iserialno=household.serialno
+AND communities.communityid=household.puma
+AND communities.year = income.year
+AND household.year= income.year
+AND communities.year = 2012
+)
+--select (retirement+interest+wages+assist+ss+disability+sinc), iserialno 
+select (numer/ denom)*100
+from (select count(distinct iserialno) as numer
+from (select sum(coalesce(retp,0)) retirement, 
+sum(coalesce(intp,0)) interest, 
+sum(coalesce(WAGP,0)) wages, 
+sum(coalesce(pap,0)) assist, 
+sum(coalesce(ssp,0)) ss, 
+sum(coalesce(ssip,0)) disability, 
+sum(coalesce(semp,0)) sinc,
+np,
+iserialno from T 
+group by iserialno, np)
+where (retirement+interest+wages+assist+ss+disability+sinc)
+< 
+(POWER( np, 5)*3.7481 -
+70.284 * power(np,4) +
+413.55 * power(np,3) 
+- 609.44 * power(np,2) +
+2871.7*np + 9144.7)), (select Count(distinct serialNo) as denom from T);
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
