@@ -68,7 +68,7 @@ $array2 = array();
             $q = "";
             if($var3 == 'Florida') {
                 $q = "select Median(isum)
-                        from (select sum (income.wagp) as isum from income join household on (income.serialNo = household.serialNo and income.year = household.year) 
+                        from (select sum (income.wagp) as isum from income join household on (income.iserialNo = household.serialNo and income.year = household.year) 
                         join communities on (household.PUMA = communities.communityID and household.year = communities.year)
                         join states on (communities.belongsTo = states.stateID and communities.year = states.year)
                         where income.year = " . $var4 . " and states.name = 'Florida'
@@ -77,7 +77,7 @@ $array2 = array();
             }
             else {
                 $q = "SELECT Median(isum)
-                    from (select sum (income.wagp) as isum from income join household on (income.serialNo = household.serialNo and income.year = household.year) 
+                    from (select sum (income.wagp) as isum from income join household on (income.iserialNo = household.serialNo and income.year = household.year) 
                     join communities on (household.PUMA = communities.communityID and household.year = communities.year)
                     where income.year = " . $var4 . " and communities.name = '" . $var3 . "' group by communities.name, household.serialNo), communities
                     where communities.name = '" . $var3 . "' and communities.year = " . $var4 . " group by communities.name";
@@ -91,7 +91,7 @@ $array2 = array();
             $q = "";
             if($var3 == 'Florida') {
                 $q = "select states.name, Avg(isum)
-                        from (select sum (income.wagp) as isum from income join household on (income.serialNo = household.serialNo and income.year = household.year) 
+                        from (select sum (income.wagp) as isum from income join household on (income.iserialNo = household.serialNo and income.year = household.year) 
                         join communities on (household.PUMA = communities.communityID and household.year = communities.year)
                         join states on (communities.belongsTo = states.stateID and communities.year = states.year)
                         where income.year = " . $var4 . " and states.name = 'Florida'
@@ -100,7 +100,7 @@ $array2 = array();
             }
             else {
                 $q = "select Avg(isum)
-                    from (select sum (income.wagp) as isum from income join household on (income.serialNo = household.serialNo and income.year = household.year) 
+                    from (select sum (income.wagp) as isum from income join household on (income.iserialNo = household.serialNo and income.year = household.year) 
                     join communities on (household.PUMA = communities.communityID and household.year = communities.year)
                     where income.year = " . $var4 . " and communities.name = '" . $var3 . "' 
                     group by communities.name, household.serialNo), communities
