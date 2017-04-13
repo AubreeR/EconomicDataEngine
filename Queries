@@ -294,3 +294,19 @@ where (retirement+interest+wages+assist+ss+disability+sinc)
 413.55 * power(np,3) 
 - 609.44 * power(np,2) +
 2871.7*np + 9144.7)), (select Count(distinct serialNo) as denom from T);
+
+AVG AGE:
+IF COMMUNITY:
+select communities.name, Avg(person.Agep)
+from person join household on (person.serialNo = household.serialNo and  person.year = household.year)
+  join communities on (PUMA = communityID and communities.year = household.year)
+where communities.name = x and person.year = y
+group by communities.name;
+
+IF STATE:
+select states.name, Avg(person.Agep)
+from person join household on (person.serialNo = household.serialNo and  person.year = household.year)
+    join communities on (PUMA = communityID and communities.year = household.year) join states on 
+    (communities.BELONGSTO = states.stateID and communities.year = states.year)
+where states.name = x  and person.year = y
+group by states.name;
