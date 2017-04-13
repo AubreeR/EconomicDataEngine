@@ -264,3 +264,36 @@ AND communities.year=2013)
 select n1 from ((select n1, n2, i2-i1 from (select iname n1, count(industryid)i1 from T group by industryid, iname)
 , (select iname n2, count(industryid)i2 from X group by industryid, iname) where n1=n2) order by i2-i1 desc) 
 where rownum = 1;
+
+
+ --this gives the number of households in poverty in a given community
+with T AS (select * from income, household, communities
+where income.iserialno=household.serialno
+AND communities.communityid=household.puma
+AND communities.year = income.year
+AND household.year= income.year
+AND communities.name = 'insert name here'
+AND communities.year = 'insert year here'
+)
+
+
+--select (retirement+interest+wages+assist+ss+disability+sinc), iserialno 
+select count(distinct iserialno)
+from (select sum(retp) retirement, 
+sum(intp) interest, 
+sum(wagp) wages, 
+sum(pap) assist, 
+sum(ssp) ss, 
+sum(ssip) disability, 
+sum(semp)sinc,
+np,
+iserialno from T 
+group by iserialno, np) 
+
+where (retirement+interest+wages+assist+ss+disability+sinc)
+< 
+(POWER( np, 5)*3.7481 -
+70.284 * power(np,4) +
+413.55 * power(np,3) 
+- 609.44 * power(np,2) +
+2871.7*np + 9144.7);
