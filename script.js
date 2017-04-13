@@ -230,26 +230,36 @@ $(document).on('click', '.compare', function() {
             }
         });
 
-        $('.loader').show();
-        var load = setTimeout(function() {
-            temp = "Try Again";
-        }, 60000);
+        if(ds1 == "Fastest Growing Industry" || 
+            ds1 == "Most Spoken Foreign Language") {
+            alert("Cannot use data series '" + ds1 + "' to correlate because it is not a number");
+        }
+        else if(ds2 == "Fastest Growing Industry" || 
+            ds2 == "Most Spoken Foreign Language") {
+            alert("Cannot use data series '" + ds2 + "' to correlate because it is not a number");
+        }
+        else {
+            $('.loader').show();
+            var load = setTimeout(function() {
+                temp = "Try Again";
+            }, 60000);
 
-        $.get("functions.php", 
-            { 'check': 'compare',
-                'var1': area1,
-                'var2': area2,
-                'var3': ds1,
-                'var4': ds2
-            },
-            function(data) { 
-                temp = data;
-                clearTimeout(load);
-                comparedata(area1, first, area2, second, ds1, ds2,temp); 
-                $('.loader').hide();
-            }, 
-            "text"
-        );     
+            $.get("functions.php", 
+                { 'check': 'compare',
+                    'var1': area1,
+                    'var2': area2,
+                    'var3': ds1,
+                    'var4': ds2
+                },
+                function(data) { 
+                    temp = data;
+                    clearTimeout(load);
+                    comparedata(area1, first, area2, second, ds1, ds2,temp); 
+                    $('.loader').hide();
+                }, 
+                "text"
+            );  
+        }   
     }
 });
 
