@@ -34,11 +34,11 @@ h1 {
     background-color: #d3d3d3;
 }
 
-.compare, .remove {
+.compare, .remove, .tuplecount {
     background-color: #d3d3d3;
 }
 
-.add:hover, .compare:hover, .remove:hover {
+.add:hover, .compare:hover, .remove:hover, .tuplecount:hover {
     background-color: #fff;
 }
 

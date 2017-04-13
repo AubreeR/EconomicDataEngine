@@ -286,5 +286,21 @@ $(document).on('click', '.remove', function() {
     
 });
 
+$(document).on('click', '.tuplecount', function() {
+   $('.loader').show();
+
+   $.get("functions.php", 
+        { 
+            'check': 'tuplecount',  
+        },
+        function(data) { 
+            temp = data;
+            $('.loader').hide();
+        }, 
+        "text"
+    );   
+
+    $('.tuplecount').append("<p>" + temp + "</p>");   
+});
 
 
