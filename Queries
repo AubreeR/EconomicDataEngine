@@ -271,15 +271,12 @@ where income.iserialno=household.serialno
 AND communities.communityid=household.puma
 AND communities.year = income.year
 AND household.year= income.year
-AND communities.name = 'insert name here'
-AND communities.year = 'insert year here'
+AND communities.name = 'Citrus County'
+AND communities.year = 2012
 )
-
-
 --select (retirement+interest+wages+assist+ss+disability+sinc), iserialno 
-select count(distinct iserialno)/(select Count(distinct household.serialNo) from household join community on (household.PUMA = 
-  communities.communityID and household.year = communities.year) where communities.name = 'insert name here' and 
-  communities.year = 'year')*100
+select (numer/ denom)*100
+from (select count(distinct iserialno) as numer
 from (select sum(retp) retirement, 
 sum(intp) interest, 
 sum(wagp) wages, 
@@ -289,12 +286,11 @@ sum(ssip) disability,
 sum(semp)sinc,
 np,
 iserialno from T 
-group by iserialno, np) 
-
+group by iserialno, np)
 where (retirement+interest+wages+assist+ss+disability+sinc)
 < 
 (POWER( np, 5)*3.7481 -
 70.284 * power(np,4) +
 413.55 * power(np,3) 
 - 609.44 * power(np,2) +
-2871.7*np + 9144.7);
+2871.7*np + 9144.7)), (select Count(distinct serialNo) as denom from T);
