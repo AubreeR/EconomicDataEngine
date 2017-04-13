@@ -54,22 +54,28 @@
         //$var3 is the first data series to compare
         //$var4 is the second data series to compare
 
+        $var1 = substr($var1, 0, -5);
+        $var2 = substr($var2, 0, -5);
+
         //Getting values from first data series
         $year = 2012;
         for($i = 0; $i <= 3; $i++) {
             $array1[$i] = performQueryCompare($var3, $var1, $year, $conn, $i, $array1);
-            $year = $year + $i;
+            $year = $year + 1;
+            //echo $array1[$i];
         }
 
         //Getting values from second data series
         $year = 2012;
         for($i = 0; $i <= 3; $i++) {
-            $array2[$i] = performQueryCompare2($var4, $var2, $year, $conn, $i, $array2);
-            $year = $year + $i;
+            $array2[$i] = performQueryCompare($var4, $var2, $year, $conn, $i, $array2);
+            $year = $year + 1;
+            //echo $array2[$i];
         }
 
         //Do correlation
         $data = Correlation($array1, $array2);
+        // $data = $year;
         echo $data;
     }
 

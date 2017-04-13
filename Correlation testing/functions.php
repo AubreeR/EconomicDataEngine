@@ -26,23 +26,23 @@
     $year = 2012;
 
     for($i = 0; $i <= 3; $i++) {
-        $array1 = performQueryCompare($var3, $var1, $year, $conn, $i, $array1);
+        $array1[$i] = performQueryCompare($var3, $var1, $year, $conn, $i, $array1);
         $year = $year + $i;
+        print $array1[$i];
+        print "<br>";
         //$GLOBALS['array1'][$i] = $data;
         //$array1[$i] = $data;
     }
 
      $year = 2012;
     for($i = 0; $i <= 3; $i++) {
-        $array2 = performQueryCompare($var4, $var2, $year, $conn, $i, $array2);
+        $array2[$i] = performQueryCompare($var4, $var2, $year, $conn, $i, $array2);
         $year = $year + $i;
-       
+        print $array2[$i];
+        print "<br>";
         //$GLOBALS['array2'][$i] = $data;
         //$array2[$i] = $data;
     }
-
-    print($array1);
-    print($array2);
 
     $data = Correlation($array1, $array2);
     echo $data;
@@ -309,10 +309,10 @@
             // $GLOBALS['array1'][$i] = $name;
         }
         
-        if(is_null($data)) {
-           $array[0] = 88;
+        //if(is_null($data)) {
+           //$array[0] = 88;
            // $GLOBALS['array1'][0] == 88;
-        }
+       // }
         //$GLOBALS['array1'][0] == 88;
         oci_free_statement($stid);
 
