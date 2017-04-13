@@ -1,0 +1,89 @@
+2. Poverty
+IF COMMUNITY:
+  select communities.name, Count(distinct personalID)
+  from ((income join person on (income.pID = person.personalID and income.year = person.year)) join household on (person.serialNo = 
+    household.serialNo and person.year = household.year)) join communities on (household.isWithin = communities.communityID and 
+    household.year = communities.year)
+  where communities.name = x and year = y
+  having povertyIncomeRatio < 100;
+  
+IF STATE:
+  select states.name, Count(distinct personalID)
+  from (((income join person on (income.pID = person.personalID and income.year = person.year)) join household on (person.serialNo = 
+    household.serialNo and person.year = household.year)) join communities on (household.isWithin = communities.communityID and 
+    household.year = communities.year)) join states on (communities.belongsTo = states.stateID and communities.year = states.year)
+  where states.name = x and year = y
+having povertyIncomeRatio < 100;
+
+  select i1.states.name, i1.industry.name, MAX(COUNT(distinct i1.personalID) - COUNT(distinct i2.personalID))
+  from (select * from (((industry join person on (industry.industryID = person.worksFor and industry.year = person.year)) join
+   household on (person.serialNo = household.serialNo and person.year = household.year)) join communities on (household.isWithin =
+   communities.communityID and household.year = communities.year)) join states on (communities.belongsTo = states.stateID and 
+   communities.year = states.year) where states.name = x and year = y) as i1, 
+   (select * from (((industry join person on (industry.industryID = person.worksFor and industry.year = person.year)) join
+   household on (person.serialNo = household.serialNo and person.year = household.year)) join communities on (household.isWithin =
+   communities.communityID and household.year = communities.year)) join states on (communities.belongsTo = states.stateID and
+   communities.year = states.year) where states.name = x and year = y) as i2
+   where i1.industryID = i2.industryID
+   having (Count(distinct i1.personalID) - Count(distinct i2.personalID)) = 
+MAX(COUNT(distinct i1.personalID) - COUNT(distinct i2.personalID));
+
+  select i1.communities.name, i1.industry.name, MAX(COUNT(distinct i1.personalID) - COUNT(distinct i2.personalID))
+  from (select * from ((industry join person on (industry.industryID = person.worksFor and industry.year = person.year)) join
+   household on (person.serialNo = household.serialNo and person.year = household.year)) join communities on (household.isWithin =
+   communities.communityID and household.year = communities.year) where communities.name = x and year = y) as i1, 
+   (select * from ((industry join person on (industry.industryID = person.worksFor and industry.year = person.year)) join
+   household on (person.serialNo = household.serialNo and person.year = household.year)) join communities on (household.isWithin =
+   communities.communityID and household.year = communities.year) where communities.name = x and year = y) as i2
+   where i1.industryID = i2.industryID
+   having (Count(distinct i1.personalID) - Count(distinct i2.personalID)) = 
+MAX(COUNT(distinct i1.personalID) - COUNT(distinct i2.personalID));
+
+1. & 5. Economic Qrowth = Avg Income
+IF COMMUNITY:
+select communities.name, Avg(isum)
+from (select sum (income.wagp) as isum from income join household on (income.serialNo = household.serialNo and income.year = household.year) 
+  join communities on (household.PUMA = communities.communityID and household.year = communities.year)
+  where income.year = 2015 and communities.name = 'South Rhode Island--Washington County'
+  group by communities.name, household.serialNo), communities
+where communities.name = 'South Rhode Island--Washington County' and communities.year = 2015
+group by communities.name;
+  
+IF STATE:
+select states.name, Avg(isum)
+from (select sum (income.wagp) as isum from income join household on (income.serialNo = household.serialNo and income.year = household.year) 
+  join communities on (household.PUMA = communities.communityID and household.year = communities.year)
+  join states on (communities.belongsTo = states.stateID and communities.year = states.year)
+where income.year = 2015 and states.name = 'Rhode Island'
+group by states.name, household.serialNo), states
+where states.name = 'Rhode Island' and states.year = 2015
+group by states.name;
+
+IF COMMUNITY:
+select communities.name, Median(isum)
+from (select sum (income.wagp) as isum from income join household on (income.serialNo = household.serialNo and income.year = household.year) 
+  join communities on (household.PUMA = communities.communityID and household.year = communities.year)
+  where income.year = 2015 and communities.name = 'South Rhode Island--Washington County'
+  group by communities.name, household.serialNo), communities
+where communities.name = 'South Rhode Island--Washington County' and communities.year = 2015
+group by communities.name;
+    
+IF STATE:
+select states.name, Median(isum)
+from (select sum (income.wagp) as isum from income join household on (income.serialNo = household.serialNo and income.year = household.year) 
+  join communities on (household.PUMA = communities.communityID and household.year = communities.year)
+  join states on (communities.belongsTo = states.stateID and communities.year = states.year)
+where income.year = 2015 and states.name = 'Rhode Island'
+group by states.name, household.serialNo), states
+where states.name = 'Rhode Island' and states.year = 2015
+group by states.name;
+
+select i1.name, INDUSTRY.name, i2.y - i1.x
+from (select communities.name, industry.industryid, COUNT(industryid) x from industry join person on (industry.industryID = person.NAICSP) join
+   household on (person.serialNo = household.serialNo and person.year = household.year) join communities on (household.PUMA =
+   communities.communityID and household.year = communities.year) where communities.name = 'Lake County (North)' and person.year = 2012 group by communities.name, industry.INDUSTRYID)  i1,
+   (select communities.name, industry.industryid,COUNT(industryID) y from (industry join person on (industry.industryID = person.NAICSP ) join
+   household on (person.serialNo = household.serialNo and person.year = household.year)) join communities on (household.PUMA =
+   communities.communityID and household.year = communities.year) where communities.name = 'Lake County (North)' and person.year = 2013 group by communities.name, industry.INDUSTRYID)  i2,
+   industry
+where i1.industryID = i2.industryID and industry.industryid = i1.industryid;
