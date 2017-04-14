@@ -21,6 +21,25 @@
     //Queries stored in $q
     $q = '';
 
+    if($check == 'tuplecount') {
+        $q = "select
+            (select count(household.serialno) from household)+
+            (select count(communities.communityid) from communities)+
+            (select count(income.iserialno) from income)+
+            (select count(industry.industryid) from industry)+
+            (select count(person.serialno) from person)+
+            (select count(primarylanguage.languageid) from primarylanguage)+
+            (select count(states.stateid) from states) as total from COMMUNITIES, Household, income, industry, person, primarylanguage, states where rownum=1";
+        $stid = oci_parse($conn, $q);
+        oci_define_by_name($stid, 'TOTAL', $name);
+        oci_execute($stid);
+        
+        $data = $name;
+        oci_free_statement($stid);
+
+        //$data = 20;
+        echo $data;
+    }
 
     //Fill in 'Area' dropdown based on Area Type
     if($check == 'areatype') {
@@ -123,48 +142,105 @@
         else if($var1 == 'Median Income') {
             $q = "";
             if($var3 == 'Florida') {
-                $q = "select Median(isum)
-                        from (select sum (income.wagp) as isum from income join household on (income.iserialNo = household.serialNo and income.year = household.year) 
-                        join communities on (household.PUMA = communities.communityID and household.year = communities.year)
-                        join states on (communities.belongsTo = states.stateID and communities.year = states.year)
-                        where income.year = " . $var4 . " and states.name = 'Florida'
-                        group by states.name, household.serialNo), states
-                        where states.name = 'Florida' and states.year = " . $var4 . " group by states.name";
+                $q = "with T AS (select * from income, household, communities
+                        where income.iserialno=household.serialno
+                        AND communities.communityid=household.puma
+                        AND communities.year = income.year
+                        AND household.year= income.year
+                        AND communities.year = " . $var4 . "
+                        )
+
+                        select median(pincome) from 
+                        (select (retirement+interest+wages+assist+ss+disability+sinc) as pincome, iserialno 
+                        from (select sum((coalesce(retp,0))*adjinc*power(10,-6)) retirement, 
+                        sum((coalesce(intp,0))*adjinc*power(10,-6)) interest, 
+                        sum((coalesce(WAGP,0))*adjinc*power(10,-6)) wages, 
+                        sum((coalesce(pap,0))*adjinc*power(10,-6)) assist, 
+                        sum((coalesce(ssp,0))*adjinc*power(10,-6)) ss, 
+                        sum((coalesce(ssip,0))*adjinc*power(10,-6)) disability, 
+                        sum((coalesce(semp,0))*adjinc*power(10,-6)) sinc,
+                        np,
+                        iserialno from T 
+                        group by iserialno, np))";
             }
             else {
-                $q = "SELECT Median(isum)
-                    from (select sum (income.wagp) as isum from income join household on (income.iserialNo = household.serialNo and income.year = household.year) 
-                    join communities on (household.PUMA = communities.communityID and household.year = communities.year)
-                    where income.year = " . $var4 . " and communities.name = '" . $var3 . "' group by communities.name, household.serialNo), communities
-                    where communities.name = '" . $var3 . "' and communities.year = " . $var4 . " group by communities.name";
+                $q = "with T AS (select * from income, household, communities
+                        where income.iserialno=household.serialno
+                        AND communities.communityid=household.puma
+                        AND communities.year = income.year
+                        AND household.year= income.year
+                        AND communities.name = '" . $var3 . "'
+                        AND communities.year = " . $var4 . "
+                        )
+
+                        select median(pincome) from 
+                        (select (retirement+interest+wages+assist+ss+disability+sinc) as pincome, iserialno 
+                        from (select sum((coalesce(retp,0))*adjinc*power(10,-6)) retirement, 
+                        sum((coalesce(intp,0))*adjinc*power(10,-6)) interest, 
+                        sum((coalesce(WAGP,0))*adjinc*power(10,-6)) wages, 
+                        sum((coalesce(pap,0))*adjinc*power(10,-6)) assist, 
+                        sum((coalesce(ssp,0))*adjinc*power(10,-6)) ss, 
+                        sum((coalesce(ssip,0))*adjinc*power(10,-6)) disability, 
+                        sum((coalesce(semp,0))*adjinc*power(10,-6)) sinc,
+                        np,
+                        iserialno from T 
+                        group by iserialno, np))";
             }
 
             $stid = oci_parse($conn, $q);
-            oci_define_by_name($stid, 'MEDIAN(ISUM)', $name);
+            oci_define_by_name($stid, 'MEDIAN(PINCOME)', $name);
             oci_execute($stid);
         }
         else if($var1 == 'Average Income') {
             $q = "";
             if($var3 == 'Florida') {
-                $q = "select states.name, Avg(isum)
-                        from (select sum (income.wagp) as isum from income join household on (income.iserialNo = household.serialNo and income.year = household.year) 
-                        join communities on (household.PUMA = communities.communityID and household.year = communities.year)
-                        join states on (communities.belongsTo = states.stateID and communities.year = states.year)
-                        where income.year = " . $var4 . " and states.name = 'Florida'
-                        group by states.name, household.serialNo), states
-                        where states.name = 'Florida' and states.year = " . $var4 . " group by states.name";
+                $q = "with T AS (select * from income, household, communities
+                        where income.iserialno=household.serialno
+                        AND communities.communityid=household.puma
+                        AND communities.year = income.year
+                        AND household.year= income.year
+                        AND communities.year = '". $var4 . "'
+                        )
+
+                        select avg(pincome) from 
+                        (select (retirement+interest+wages+assist+ss+disability+sinc) as pincome, iserialno 
+                        from (select sum((coalesce(retp,0))*adjinc*power(10,-6)) retirement, 
+                        sum((coalesce(intp,0))*adjinc*power(10,-6)) interest, 
+                        sum((coalesce(WAGP,0))*adjinc*power(10,-6)) wages, 
+                        sum((coalesce(pap,0))*adjinc*power(10,-6)) assist, 
+                        sum((coalesce(ssp,0))*adjinc*power(10,-6)) ss, 
+                        sum((coalesce(ssip,0))*adjinc*power(10,-6)) disability, 
+                        sum((coalesce(semp,0))*adjinc*power(10,-6)) sinc,
+                        np,
+                        iserialno from T 
+                        group by iserialno, np))";
             }
             else {
-                $q = "select Avg(isum)
-                    from (select sum (income.wagp) as isum from income join household on (income.iserialNo = household.serialNo and income.year = household.year) 
-                    join communities on (household.PUMA = communities.communityID and household.year = communities.year)
-                    where income.year = " . $var4 . " and communities.name = '" . $var3 . "' 
-                    group by communities.name, household.serialNo), communities
-                    where communities.name = '" . $var3 ."' and communities.year = " . $var4 . " group by communities.name";
+                $q = "with T AS (select * from income, household, communities
+                        where income.iserialno=household.serialno
+                        AND communities.communityid=household.puma
+                        AND communities.year = income.year
+                        AND household.year= income.year
+                        AND communities.name = '" . $var3 . "'
+                        AND communities.year = " . $var4 . "
+                        )
+
+                        select avg(pincome) from 
+                        (select (retirement+interest+wages+assist+ss+disability+sinc) as pincome, iserialno 
+                        from (select sum((coalesce(retp,0))*adjinc*power(10,-6)) retirement, 
+                        sum((coalesce(intp,0))*adjinc*power(10,-6)) interest, 
+                        sum((coalesce(WAGP,0))*adjinc*power(10,-6)) wages, 
+                        sum((coalesce(pap,0))*adjinc*power(10,-6)) assist, 
+                        sum((coalesce(ssp,0))*adjinc*power(10,-6)) ss, 
+                        sum((coalesce(ssip,0))*adjinc*power(10,-6)) disability, 
+                        sum((coalesce(semp,0))*adjinc*power(10,-6)) sinc,
+                        np,
+                        iserialno from T 
+                        group by iserialno, np))";
             }
         
             $stid = oci_parse($conn, $q);
-            oci_define_by_name($stid, 'AVG(ISUM)', $name);
+            oci_define_by_name($stid, 'AVG(PINCOME)', $name);
             oci_execute($stid);
         }
         else if($var1 == 'Fastest Growing Industry') {
@@ -231,10 +307,11 @@
             oci_execute($stid);
         }
         else if($var1 == 'Percentage of Migrants') {
-            // actually number of migrants
             $q = "";
             if($var3 == 'Florida') {
-                $q = "select Count(mig)
+                $q = "select states.name, Count(mig)/(select Count(mig) from ((person join household on (person.serialNo = household.serialNo and person.year 
+                        = household.year)) join communities on (household.PUMA = communities.communityID and household.year= communities.year)) join states on
+                        (communities.belongsTo = states.stateID and communities.year = states.year) where states.name = 'Florida' and person.year = " . $var4 . ")*100 as percentMigrant
                         from ((person join household on (person.serialNo = household.serialNo and person.year = household.year)) join communities on 
                         (household.PUMA = communities.communityID and household.year= communities.year)) join states on (communities.belongsTo = 
                         states.stateID and communities.year = states.year)
@@ -242,29 +319,82 @@
                         group by states.name";
             }
             else {
-                $q = "select Count(mig)
-                    from (person join household on (person.serialNo = household.serialNo and person.year = household.year)) join communities on 
-                    (household.PUMA = communities.communityID and household.year= communities.year)
-                    where communities.name = '" . $var3 . "' and person.year = " . $var4 . " and mig = 2
-                    group by communities.name";
+                $q = "select communities.name, Count(mig)/(select Count(mig) from (person join household on (person.serialNo = household.serialNo and 
+                        person.year = household.year)) join communities on (household.PUMA = communities.communityID and household.year= communities.year)
+                        where communities.name = '" . $var3 . "' and person.year = " . $var4 . ")*100 as percentMigrant
+                        from (person join household on (person.serialNo = household.serialNo and person.year = household.year)) join communities on 
+                        (household.PUMA = communities.communityID and household.year= communities.year)
+                        where communities.name = '" . $var3 . "' and person.year = " . $var4 . " and mig = 2 
+                        group by communities.name";
             }
             
             $stid = oci_parse($conn, $q);  
-            oci_define_by_name($stid, 'COUNT(MIG)', $name);
+            oci_define_by_name($stid, "PERCENTMIGRANT", $name);
             oci_execute($stid);
         }
         else if($var1 == 'Poverty Rate') {
-            // Poverty query not working
             $q = "";
             if($var3 == 'Florida') {
-
+                $q = "with T AS (select * from income, household, communities
+                        where income.iserialno=household.serialno
+                        AND communities.communityid=household.puma
+                        AND communities.year = income.year
+                        AND household.year= income.year
+                        AND communities.year = " . $var4 . "
+                        )
+                        --select (retirement+interest+wages+assist+ss+disability+sinc), iserialno 
+                        select (numer/ denom)*100
+                        from (select count(distinct iserialno) as numer
+                        from (select sum((coalesce(retp,0))*adjinc*power(10,-6)) retirement, 
+                        sum((coalesce(intp,0))*adjinc*power(10,-6)) interest, 
+                        sum((coalesce(WAGP,0))*adjinc*power(10,-6)) wages, 
+                        sum((coalesce(pap,0))*adjinc*power(10,-6)) assist, 
+                        sum((coalesce(ssp,0))*adjinc*power(10,-6)) ss, 
+                        sum((coalesce(ssip,0))*adjinc*power(10,-6)) disability, 
+                        sum((coalesce(semp,0))*adjinc*power(10,-6)) sinc,
+                        np,
+                        iserialno from T 
+                        group by iserialno, np)
+                        where (retirement+interest+wages+assist+ss+disability+sinc)
+                        < 
+                        (POWER( np, 5)*3.7481 -
+                        70.284 * power(np,4) +
+                        413.55 * power(np,3) 
+                        - 609.44 * power(np,2) +
+                        2871.7*np + 9144.7)), (select Count(distinct serialNo) as denom from T)";
             }
             else {
-                $q = "SELECT distinct name 
-                    FROM '" . $var2;
+                $q = " --this gives the number of households in poverty in a given community
+                            with T AS (select * from income, household, communities
+                            where income.iserialno=household.serialno
+                            AND communities.communityid=household.puma
+                            AND communities.year = income.year
+                            AND household.year= income.year
+                            AND communities.name = '" . $var3 . "'
+                            AND communities.year = " . $var4 . "
+                            )
+                            select (numer/ denom)*100
+                            from (select count(distinct iserialno) as numer
+                            from (select sum((coalesce(retp,0))*adjinc*power(10,-6)) retirement, 
+                            sum((coalesce(intp,0))*adjinc*power(10,-6)) interest, 
+                            sum((coalesce(WAGP,0))*adjinc*power(10,-6)) wages, 
+                            sum((coalesce(pap,0))*adjinc*power(10,-6)) assist, 
+                            sum((coalesce(ssp,0))*adjinc*power(10,-6)) ss, 
+                            sum((coalesce(ssip,0))*adjinc*power(10,-6)) disability, 
+                            sum((coalesce(semp,0))*adjinc*power(10,-6)) sinc,
+                            np,
+                            iserialno, adjinc from T 
+                            group by iserialno, np, adjinc)
+                            where (retirement+interest+wages+assist+ss+disability+sinc)
+                            < 
+                            (POWER( np, 5)*3.7481 -
+                            70.284 * power(np,4) +
+                            413.55 * power(np,3) 
+                            - 609.44 * power(np,2) +
+                            2871.7*np + 9144.7)), (select Count(distinct serialNo) as denom from T)";
             }
             $stid = oci_parse($conn, $q);  
-            oci_define_by_name($stid, 'NAME', $name);
+            oci_define_by_name($stid, '(NUMER/DENOM)*100', $name);
             oci_execute($stid);
         }
         else if($var1 == 'Number of Languages') {
@@ -333,9 +463,27 @@
                         communities.year) where communities.name = '" . $var3 . "' and 
                         communities.year = " . $var4 . " group by languageID)";
             }
+        }
+        else if($var1 == 'Average Age') {
+            $q = "";
+            if($var3 == 'Florida') {
+                $q = "select states.name, Avg(person.Agep)
+                        from person join household on (person.serialNo = household.serialNo and  person.year = household.year)
+                            join communities on (PUMA = communityID and communities.year = household.year) join states on 
+                            (communities.BELONGSTO = states.stateID and communities.year = states.year)
+                        where states.name = 'Florida'  and person.year = " . $var4 . "
+                        group by states.name";
+            }
+            else {
+                $q = "select communities.name, Avg(person.Agep)
+                        from person join household on (person.serialNo = household.serialNo and  person.year = household.year)
+                        join communities on (PUMA = communityID and communities.year = household.year)
+                        where communities.name = '" . $var3 . "' and person.year = " . $var4 . "
+                        group by communities.name";
+            }
 
             $stid = oci_parse($conn, $q);
-            oci_define_by_name($stid, 'NAME', $name);
+            oci_define_by_name($stid, 'AVG(PERSON.AGEP)', $name);
             oci_execute($stid);
         }
         while(oci_fetch($stid)) {
@@ -391,48 +539,105 @@
         else if($dataseries == 'Median Income') {
             $q = "";
             if($areaname == 'Florida') {
-                $q = "select Median(isum)
-                        from (select sum (income.wagp) as isum from income join household on (income.serialNo = household.serialNo and income.year = household.year) 
-                        join communities on (household.PUMA = communities.communityID and household.year = communities.year)
-                        join states on (communities.belongsTo = states.stateID and communities.year = states.year)
-                        where income.year = " . $year . " and states.name = 'Florida'
-                        group by states.name, household.serialNo), states
-                        where states.name = 'Florida' and states.year = " . $year . " group by states.name";
+                $q = "with T AS (select * from income, household, communities
+                        where income.iserialno=household.serialno
+                        AND communities.communityid=household.puma
+                        AND communities.year = income.year
+                        AND household.year= income.year
+                        AND communities.year = " . $year . "
+                        )
+
+                        select median(pincome) from 
+                        (select (retirement+interest+wages+assist+ss+disability+sinc) as pincome, iserialno 
+                        from (select sum((coalesce(retp,0))*adjinc*power(10,-6)) retirement, 
+                        sum((coalesce(intp,0))*adjinc*power(10,-6)) interest, 
+                        sum((coalesce(WAGP,0))*adjinc*power(10,-6)) wages, 
+                        sum((coalesce(pap,0))*adjinc*power(10,-6)) assist, 
+                        sum((coalesce(ssp,0))*adjinc*power(10,-6)) ss, 
+                        sum((coalesce(ssip,0))*adjinc*power(10,-6)) disability, 
+                        sum((coalesce(semp,0))*adjinc*power(10,-6)) sinc,
+                        np,
+                        iserialno from T 
+                        group by iserialno, np))";
             }
             else {
-                $q = "SELECT Median(isum)
-                    from (select sum (income.wagp) as isum from income join household on (income.serialNo = household.serialNo and income.year = household.year) 
-                    join communities on (household.PUMA = communities.communityID and household.year = communities.year)
-                    where income.year = " . $year . " and communities.name = '" . $areaname . "' group by communities.name, household.serialNo), communities
-                    where communities.name = '" . $areaname . "' and communities.year = " . $year . " group by communities.name";
+                $q = "with T AS (select * from income, household, communities
+                        where income.iserialno=household.serialno
+                        AND communities.communityid=household.puma
+                        AND communities.year = income.year
+                        AND household.year= income.year
+                        AND communities.name = '" . $areaname . "'
+                        AND communities.year = " . $year . "
+                        )
+
+                        select median(pincome) from 
+                        (select (retirement+interest+wages+assist+ss+disability+sinc) as pincome, iserialno 
+                        from (select sum((coalesce(retp,0))*adjinc*power(10,-6)) retirement, 
+                        sum((coalesce(intp,0))*adjinc*power(10,-6)) interest, 
+                        sum((coalesce(WAGP,0))*adjinc*power(10,-6)) wages, 
+                        sum((coalesce(pap,0))*adjinc*power(10,-6)) assist, 
+                        sum((coalesce(ssp,0))*adjinc*power(10,-6)) ss, 
+                        sum((coalesce(ssip,0))*adjinc*power(10,-6)) disability, 
+                        sum((coalesce(semp,0))*adjinc*power(10,-6)) sinc,
+                        np,
+                        iserialno from T 
+                        group by iserialno, np))";
             }
 
             $stid = oci_parse($conn, $q);
-            oci_define_by_name($stid, 'MEDIAN(ISUM)', $name);
+            oci_define_by_name($stid, 'MEDIAN(PINCOME)', $name);
             oci_execute($stid);
         }
         else if($dataseries == 'Average Income') {
             $q = "";
             if($areaname == 'Florida') {
-                $q = "select states.name, Avg(isum)
-                        from (select sum (income.wagp) as isum from income join household on (income.serialNo = household.serialNo and income.year = household.year) 
-                        join communities on (household.PUMA = communities.communityID and household.year = communities.year)
-                        join states on (communities.belongsTo = states.stateID and communities.year = states.year)
-                        where income.year = " . $year . " and states.name = 'Florida'
-                        group by states.name, household.serialNo), states
-                        where states.name = 'Florida' and states.year = " . $year . " group by states.name";
+                $q = "with T AS (select * from income, household, communities
+                        where income.iserialno=household.serialno
+                        AND communities.communityid=household.puma
+                        AND communities.year = income.year
+                        AND household.year= income.year
+                        AND communities.year = " . $year . "
+                        )
+
+                        select avg(pincome) from 
+                        (select (retirement+interest+wages+assist+ss+disability+sinc) as pincome, iserialno 
+                        from (select sum(coalesce(retp,0)) retirement, 
+                        sum(coalesce(intp,0)) interest, 
+                        sum(coalesce(WAGP,0)) wages, 
+                        sum(coalesce(pap,0)) assist, 
+                        sum(coalesce(ssp,0)) ss, 
+                        sum(coalesce(ssip,0)) disability, 
+                        sum(coalesce(semp,0))sinc,
+                        np,
+                        iserialno from T 
+                        group by iserialno, np))";
             }
             else {
-                $q = "select Avg(isum)
-                    from (select sum (income.wagp) as isum from income join household on (income.serialNo = household.serialNo and income.year = household.year) 
-                    join communities on (household.PUMA = communities.communityID and household.year = communities.year)
-                    where income.year = " . $year . " and communities.name = '" . $areaname . "' 
-                    group by communities.name, household.serialNo), communities
-                    where communities.name = '" . $areaname ."' and communities.year = " . $year . " group by communities.name";
+                $q = "with T AS (select * from income, household, communities
+                        where income.iserialno=household.serialno
+                        AND communities.communityid=household.puma
+                        AND communities.year = income.year
+                        AND household.year= income.year
+                        AND communities.name = '" . $areaname . "'
+                        AND communities.year = " . $year . "
+                        )
+
+                        select avg(pincome) from 
+                        (select (retirement+interest+wages+assist+ss+disability+sinc) as pincome, iserialno 
+                        from (select sum((coalesce(retp,0))*adjinc*power(10,-6)) retirement, 
+                        sum((coalesce(intp,0))*adjinc*power(10,-6)) interest, 
+                        sum((coalesce(WAGP,0))*adjinc*power(10,-6)) wages, 
+                        sum((coalesce(pap,0))*adjinc*power(10,-6)) assist, 
+                        sum((coalesce(ssp,0))*adjinc*power(10,-6)) ss, 
+                        sum((coalesce(ssip,0))*adjinc*power(10,-6)) disability, 
+                        sum((coalesce(semp,0))*adjinc*power(10,-6)) sinc,
+                        np,
+                        iserialno from T 
+                        group by iserialno, np))";
             }
         
             $stid = oci_parse($conn, $q);
-            oci_define_by_name($stid, 'AVG(ISUM)', $name);
+            oci_define_by_name($stid, 'AVG(PINCOME)', $name);
             oci_execute($stid);
         }
         else if($dataseries == 'Fastest Growing Industry') {
@@ -502,7 +707,9 @@
             // actually number of migrants
             $q = "";
             if($dataseries == 'Florida') {
-                $q = "select Count(mig)
+                $q = "select states.name, Count(mig)/(select Count(mig) from ((person join household on (person.serialNo = household.serialNo and person.year 
+                        = household.year)) join communities on (household.PUMA = communities.communityID and household.year= communities.year)) join states on
+                        (communities.belongsTo = states.stateID and communities.year = states.year) where states.name = 'Florida' and person.year = " . $year . ")*100 as percentMigrant
                         from ((person join household on (person.serialNo = household.serialNo and person.year = household.year)) join communities on 
                         (household.PUMA = communities.communityID and household.year= communities.year)) join states on (communities.belongsTo = 
                         states.stateID and communities.year = states.year)
@@ -510,28 +717,82 @@
                         group by states.name";
             }
             else {
-                $q = "select Count(mig)
-                    from (person join household on (person.serialNo = household.serialNo and person.year = household.year)) join communities on 
-                    (household.PUMA = communities.communityID and household.year= communities.year)
-                    where communities.name = '" . $areaname . "' and person.year = " . $year . " and mig = 2
-                    group by communities.name";
+                $q = "select communities.name, Count(mig)/(select Count(mig) from (person join household on (person.serialNo = household.serialNo and 
+                        person.year = household.year)) join communities on (household.PUMA = communities.communityID and household.year= communities.year)
+                        where communities.name = '" . $areaname . "' and person.year = " . $year . ")*100 as percentMigrant
+                        from (person join household on (person.serialNo = household.serialNo and person.year = household.year)) join communities on 
+                        (household.PUMA = communities.communityID and household.year= communities.year)
+                        where communities.name = '" . $areaname . "' and person.year = " . $year . " and mig = 2 
+                        group by communities.name";
             }
             
             $stid = oci_parse($conn, $q);  
-            oci_define_by_name($stid, 'COUNT(MIG)', $name);
+            oci_define_by_name($stid, 'PERCENTMIGRANT', $name);
             oci_execute($stid);
         }
         else if($dataseries == 'Poverty Rate') {
-            // Poverty query not working
             $q = "";
             if($areaname == 'Florida') {
-
+                $q = "with T AS (select * from income, household, communities
+                        where income.iserialno=household.serialno
+                        AND communities.communityid=household.puma
+                        AND communities.year = income.year
+                        AND household.year= income.year
+                        AND communities.year = " . $year . "
+                        )
+                        --select (retirement+interest+wages+assist+ss+disability+sinc), iserialno 
+                        select (numer/ denom)*100
+                        from (select count(distinct iserialno) as numer
+                        from (select sum((coalesce(retp,0))*adjinc*power(10,-6)) retirement, 
+                        sum((coalesce(intp,0))*adjinc*power(10,-6)) interest, 
+                        sum((coalesce(WAGP,0))*adjinc*power(10,-6)) wages, 
+                        sum((coalesce(pap,0))*adjinc*power(10,-6)) assist, 
+                        sum((coalesce(ssp,0))*adjinc*power(10,-6)) ss, 
+                        sum((coalesce(ssip,0))*adjinc*power(10,-6)) disability, 
+                        sum((coalesce(semp,0))*adjinc*power(10,-6)) sinc,
+                        np,
+                        iserialno from T 
+                        group by iserialno, np)
+                        where (retirement+interest+wages+assist+ss+disability+sinc)
+                        < 
+                        (POWER( np, 5)*3.7481 -
+                        70.284 * power(np,4) +
+                        413.55 * power(np,3) 
+                        - 609.44 * power(np,2) +
+                        2871.7*np + 9144.7)), (select Count(distinct serialNo) as denom from T)";
             }
             else {
-                
+                $q = " --this gives the number of households in poverty in a given community
+                            with T AS (select * from income, household, communities
+                            where income.iserialno=household.serialno
+                            AND communities.communityid=household.puma
+                            AND communities.year = income.year
+                            AND household.year= income.year
+                            AND communities.name = '" . $areaname . "'
+                            AND communities.year = " . $year . "
+                            )
+                            select (numer/ denom)*100
+                            from (select count(distinct iserialno) as numer
+                            from (select sum((coalesce(retp,0))*adjinc*power(10,-6)) retirement, 
+                            sum((coalesce(intp,0))*adjinc*power(10,-6)) interest, 
+                            sum((coalesce(WAGP,0))*adjinc*power(10,-6)) wages, 
+                            sum((coalesce(pap,0))*adjinc*power(10,-6)) assist, 
+                            sum((coalesce(ssp,0))*adjinc*power(10,-6)) ss, 
+                            sum((coalesce(ssip,0))*adjinc*power(10,-6)) disability, 
+                            sum((coalesce(semp,0))*adjinc*power(10,-6)) sinc,
+                            np,
+                            iserialno, adjinc from T 
+                            group by iserialno, np, adjinc)
+                            where (retirement+interest+wages+assist+ss+disability+sinc)
+                            < 
+                            (POWER( np, 5)*3.7481 -
+                            70.284 * power(np,4) +
+                            413.55 * power(np,3) 
+                            - 609.44 * power(np,2) +
+                            2871.7*np + 9144.7)), (select Count(distinct serialNo) as denom from T)";
             }
             $stid = oci_parse($conn, $q);  
-            oci_define_by_name($stid, 'NAME', $name);
+            oci_define_by_name($stid, '(NUMER/DENOM)*100', $name);
             oci_execute($stid);
         }
         else if($dataseries == 'Number of Languages') {
@@ -603,6 +864,28 @@
 
             $stid = oci_parse($conn, $q);
             oci_define_by_name($stid, 'NAME', $name);
+            oci_execute($stid);
+        }
+        else if($dataseries == 'Average Age') {
+            $q = "";
+            if($var3 == 'Florida') {
+                $q = "select states.name, Avg(person.Agep)
+                        from person join household on (person.serialNo = household.serialNo and  person.year = household.year)
+                            join communities on (PUMA = communityID and communities.year = household.year) join states on 
+                            (communities.BELONGSTO = states.stateID and communities.year = states.year)
+                        where states.name = 'Florida'  and person.year = " . $year . "
+                        group by states.name";
+            }
+            else {
+                $q = "select communities.name, Avg(person.Agep)
+                        from person join household on (person.serialNo = household.serialNo and  person.year = household.year)
+                        join communities on (PUMA = communityID and communities.year = household.year)
+                        where communities.name = '" . $areaname . "' and person.year = " . $year . "
+                        group by communities.name";
+            }
+
+            $stid = oci_parse($conn, $q);
+            oci_define_by_name($stid, 'AVG(PERSON.AGEP)', $name);
             oci_execute($stid);
         }
         while(oci_fetch($stid)) {

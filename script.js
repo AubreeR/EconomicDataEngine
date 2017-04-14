@@ -299,8 +299,9 @@ $(document).on('click', '.tuplecount', function() {
         }, 
         "text"
     );   
+    console.log(temp);
 
-    $('.tuplecount').append("<p>" + temp + "</p>");   
+    $('.tuplecount').text(temp);   
 });
 
 
