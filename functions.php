@@ -121,20 +121,20 @@
         else if($var1 == 'Fertility Rate') {
             $q = "";
             if($var3 == 'Florida') {
-                $q = "select sum(household.NOC)/(Count(*) / 2)
+                $q = "select ROUND(sum(household.NOC)/(Count(*) / 2),2)
                         from person join household on (person.serialNo = household.serialNo and person.year = household.year)
                         join communities on (PUMA = communityID and communities.year = household.year)
                         join states on (communities.BELONGSTO = states.stateID and communities.year = states.year)
                         where states.name = 'Florida' and household.year = " . $var4 . " group by states.name";
             }
             else {
-                 $q = "select sum(household.NOC)/(Count(*) / 2)
+                 $q = "select ROUND(sum(household.NOC)/(Count(*) / 2),2)
                     from person join household on (person.serialNo = household.serialNo and person.year = household.year)
                     join communities on (PUMA = communityID and communities.year = household.year)
                     where communities.name = '" . $var3 . "' and household.year = '" . $var4 . "' group by communities.name";
             }
             $stid = oci_parse($conn, $q);
-            oci_define_by_name($stid, 'SUM(HOUSEHOLD.NOC)/(COUNT(*)/2)', $name);
+            oci_define_by_name($stid, 'ROUND(SUM(HOUSEHOLD.NOC)/(COUNT(*)/2),2)', $name);
             oci_execute($stid);
         }
         else if($var1 == 'Median Income') {
@@ -200,7 +200,7 @@
                         AND communities.year = '". $var4 . "'
                         )
 
-                        select avg(pincome) from 
+                        select ROUND(avg(pincome), 2) from 
                         (select (retirement+interest+wages+assist+ss+disability+sinc) as pincome, iserialno 
                         from (select sum((coalesce(retp,0))*adjinc*power(10,-6)) retirement, 
                         sum((coalesce(intp,0))*adjinc*power(10,-6)) interest, 
@@ -223,7 +223,7 @@
                         AND communities.year = " . $var4 . "
                         )
 
-                        select avg(pincome) from 
+                        select ROUND(avg(pincome), 2) from 
                         (select (retirement+interest+wages+assist+ss+disability+sinc) as pincome, iserialno 
                         from (select sum((coalesce(retp,0))*adjinc*power(10,-6)) retirement, 
                         sum((coalesce(intp,0))*adjinc*power(10,-6)) interest, 
@@ -238,7 +238,7 @@
             }
         
             $stid = oci_parse($conn, $q);
-            oci_define_by_name($stid, 'AVG(PINCOME)', $name);
+            oci_define_by_name($stid, 'ROUND(AVG(PINCOME),2)', $name);
             oci_execute($stid);
         }
         else if($var1 == 'Fastest Growing Industry') {
@@ -307,9 +307,9 @@
         else if($var1 == 'Percentage of Migrants') {
             $q = "";
             if($var3 == 'Florida') {
-                $q = "select states.name, Count(mig)/(select Count(mig) from ((person join household on (person.serialNo = household.serialNo and person.year 
+                $q = "select states.name, ROUND(Count(mig)/(select Count(mig) from ((person join household on (person.serialNo = household.serialNo and person.year 
                         = household.year)) join communities on (household.PUMA = communities.communityID and household.year= communities.year)) join states on
-                        (communities.belongsTo = states.stateID and communities.year = states.year) where states.name = 'Florida' and person.year = " . $var4 . ")*100 as percentMigrant
+                        (communities.belongsTo = states.stateID and communities.year = states.year) where states.name = 'Florida' and person.year = " . $var4 . ")*100, 2) as percentMigrant
                         from ((person join household on (person.serialNo = household.serialNo and person.year = household.year)) join communities on 
                         (household.PUMA = communities.communityID and household.year= communities.year)) join states on (communities.belongsTo = 
                         states.stateID and communities.year = states.year)
@@ -317,9 +317,9 @@
                         group by states.name";
             }
             else {
-                $q = "select communities.name, Count(mig)/(select Count(mig) from (person join household on (person.serialNo = household.serialNo and 
+                $q = "select communities.name, ROUND(Count(mig)/(select Count(mig) from (person join household on (person.serialNo = household.serialNo and 
                         person.year = household.year)) join communities on (household.PUMA = communities.communityID and household.year= communities.year)
-                        where communities.name = '" . $var3 . "' and person.year = " . $var4 . ")*100 as percentMigrant
+                        where communities.name = '" . $var3 . "' and person.year = " . $var4 . ")*100, 2) as percentMigrant
                         from (person join household on (person.serialNo = household.serialNo and person.year = household.year)) join communities on 
                         (household.PUMA = communities.communityID and household.year= communities.year)
                         where communities.name = '" . $var3 . "' and person.year = " . $var4 . " and mig = 2 
@@ -341,7 +341,7 @@
                         AND communities.year = " . $var4 . "
                         )
                         --select (retirement+interest+wages+assist+ss+disability+sinc), iserialno 
-                        select (numer/ denom)*100
+                        select ROUND((numer/ denom)*100, 2)
                         from (select count(distinct iserialno) as numer
                         from (select sum((coalesce(retp,0))*adjinc*power(10,-6)) retirement, 
                         sum((coalesce(intp,0))*adjinc*power(10,-6)) interest, 
@@ -371,7 +371,7 @@
                             AND communities.name = '" . $var3 . "'
                             AND communities.year = " . $var4 . "
                             )
-                            select (numer/ denom)*100
+                            select ROUND((numer/ denom)*100, 2)
                             from (select count(distinct iserialno) as numer
                             from (select sum((coalesce(retp,0))*adjinc*power(10,-6)) retirement, 
                             sum((coalesce(intp,0))*adjinc*power(10,-6)) interest, 
@@ -392,7 +392,7 @@
                             2871.7*np + 9144.7)), (select Count(distinct serialNo) as denom from T)";
             }
             $stid = oci_parse($conn, $q);  
-            oci_define_by_name($stid, '(NUMER/DENOM)*100', $name);
+            oci_define_by_name($stid, 'ROUND((NUMER/DENOM)*100,2)', $name);
             oci_execute($stid);
         }
         else if($var1 == 'Number of Languages') {
@@ -418,20 +418,20 @@
         else if($var1 == 'Property Value') {
             $q = "";
             if($var3 == 'Florida') {
-                $q = "select Avg(coalesce(household.VALP, 0))
+                $q = "select ROUND(Avg(coalesce(household.VALP, 0)),2)
                         from household join communities on (PUMA = communityID and communities.year = household.year) join states on 
                         (communities.BELONGSTO = states.stateID and communities.year = states.year)
                         where states.name = 'Florida' and household.year = " . $var4 . " and household.NP != 0
                         group by states.name";
             }
             else {
-                $q = "select Avg(coalesce(household.VALP, 0))
+                $q = "select ROUND(Avg(coalesce(household.VALP, 0)),2)
                     from household join communities on (PUMA = communityID and communities.year = household.year) 
                     where communities.name = '" . $var3 . "' and household.year = " . $var4 . " and household.NP != 0 group by communities.name";
             }
             
             $stid = oci_parse($conn, $q);  
-            oci_define_by_name($stid, 'AVG(COALESCE(HOUSEHOLD.VALP,0))', $name);
+            oci_define_by_name($stid, 'ROUND(AVG(COALESCE(HOUSEHOLD.VALP,0)),2)', $name);
             oci_execute($stid);
         }
         else if($var1 == 'Most Spoken Foreign Language') {
@@ -461,11 +461,14 @@
                         communities.year) where communities.name = '" . $var3 . "' and 
                         communities.year = " . $var4 . " group by languageID)";
             }
+            $stid = oci_parse($conn, $q);
+            oci_define_by_name($stid, 'NAME', $name);
+            oci_execute($stid);
         }
         else if($var1 == 'Average Age') {
             $q = "";
             if($var3 == 'Florida') {
-                $q = "select states.name, Avg(person.Agep)
+                $q = "select states.name, ROUND(Avg(person.Agep),2)
                         from person join household on (person.serialNo = household.serialNo and  person.year = household.year)
                             join communities on (PUMA = communityID and communities.year = household.year) join states on 
                             (communities.BELONGSTO = states.stateID and communities.year = states.year)
@@ -473,7 +476,7 @@
                         group by states.name";
             }
             else {
-                $q = "select communities.name, Avg(person.Agep)
+                $q = "select communities.name, ROUND(Avg(person.Agep),2)
                         from person join household on (person.serialNo = household.serialNo and  person.year = household.year)
                         join communities on (PUMA = communityID and communities.year = household.year)
                         where communities.name = '" . $var3 . "' and person.year = " . $var4 . "
@@ -481,7 +484,7 @@
             }
 
             $stid = oci_parse($conn, $q);
-            oci_define_by_name($stid, 'AVG(PERSON.AGEP)', $name);
+            oci_define_by_name($stid, 'ROUND(AVG(PERSON.AGEP),2)', $name);
             oci_execute($stid);
         }
         while(oci_fetch($stid)) {
