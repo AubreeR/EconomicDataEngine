@@ -4,41 +4,62 @@ y= year
 
 1. Fertility Rates
 IF COMMUNITY:
+
+------------------------------------------------------------------COMMUNITY FERTILITY RATES--------------------------------------------------
+
 select communities.name, sum(household.NOC)/(Count(*) / 2)
 from person join household on (person.serialNo = household.serialNo and person.year = household.year)
   join communities on (PUMA = communityID and communities.year = household.year)
 where communities.name = 'South Rhode Island--Washington County' and household.year = 2012
 group by communities.name;
 
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
 IF STATE:
+
+------------------------------------------------------------------STATE FERTILITY RATES--------------------------------------------------
+
 select states.name, sum(household.NOC)/(Count(*) / 2)
 from person join household on (person.serialNo = household.serialNo and person.year = household.year)
   join communities on (PUMA = communityID and communities.year = household.year)
   join states on (communities.BELONGSTO = states.stateID and communities.year = states.year)
 where states.name = 'Rhode Island' and household.year = 2012
 group by states.name;
- 
+
  4. Median Age vs. Property Value
  IF COMMUNITY:
+
+
+------------------------------------------------------------------COMMUNITY MEDIAN AGE-------------------------------------------------------
+
 select communities.name, Median(person.Agep)
 from person join household on (person.serialNo = household.serialNo and  person.year = household.year)
   join communities on (PUMA = communityID and communities.year = household.year)
 where communities.name = x and person.year = y
 group by communities.name;
-    
+
+
+------------------------------------------------------------------COMMUNITY AVERAGE AGE--------------------------------------------------
+
 select communities.name, Avg(coalesce(household.VALP, 0))
 from household join communities on (PUMA = communityID and communities.year = household.year)
 where communities.name = 'South Rhode Island--Washington County' and household.year = 2012 and household.NP != 0
 group by communities.name;
 
 IF STATE:
+
+------------------------------------------------------------------STATE MEDIAN AGE--------------------------------------------------------
+
 select states.name, Median(person.Agep)
 from person join household on (person.serialNo = household.serialNo and  person.year = household.year)
     join communities on (PUMA = communityID and communities.year = household.year) join states on 
     (communities.BELONGSTO = states.stateID and communities.year = states.year)
 where states.name = x  and person.year = y
 group by states.name;
-      
+
+
+------------------------------------------------------------------STATE PROPERTY VALUE--------------------------------------------------------------
+
 select states.name, Avg(coalesce(household.VALP, 0))
 from household join communities on (PUMA = communityID and communities.year = household.year) join states on 
   (communities.BELONGSTO = states.stateID and communities.year = states.year)
@@ -47,40 +68,24 @@ group by states.name;
 
 5. Languages
 IF COMMUNITY:
+
+------------------------------------------------------------------COMMUNITY LANGUAGES--------------------------------------------------
+
 select communities.name, Count(distinct person.LANP)
 from person join HOUSEHOLD on (person.serialNo = household.serialNo and person.year = household.year)
   join communities on (household.PUMA = communities.communityID and household.year = communities.year)
 where communities.name = 'South Rhode Island--Washington County' and person.year = 2012
 group by communities.name;
     
+
+------------------------------------------------------------------STATE LANGUAGES---------------------------------------------------------
+
 IF STATE:
 select states.name, Count(distinct person.LANP)
 from person join HOUSEHOLD on (person.serialNo = household.serialNo and person.year = household.year)
   join communities on (household.PUMA = communities.communityID and household.year = communities.year)
   join states on (communities.belongsTo = states.stateID and communities.year = states.year)
 where states.name = 'Rhode Island' and person.year = 2012
-group by states.name;
-
-3.Migration
-IF COMMUNITY:    
-select communities.name, Count(mig)/(select Count(mig) from (person join household on (person.serialNo = household.serialNo and 
-  person.year = household.year)) join communities on (household.PUMA = communities.communityID and household.year= communities.year)
-  where communities.name = x and person.year = y)*100
-from (person join household on (person.serialNo = household.serialNo and person.year = household.year)) join communities on 
-  (household.PUMA = communities.communityID and household.year= communities.year)
-where communities.name = x and person.year = y and mig = 2
-group by communities.name;
-
-
- 
-IF STATE:
-select states.name, Count(mig)/(select Count(mig) from ((person join household on (person.serialNo = household.serialNo and person.year 
-  = household.year)) join communities on (household.PUMA = communities.communityID and household.year= communities.year)) join states on
-  (communities.belongsTo = states.stateID and communities.year = states.year) where states.name = x and person.year = yc)*100
-from ((person join household on (person.serialNo = household.serialNo and person.year = household.year)) join communities on 
-  (household.PUMA = communities.communityID and household.year= communities.year)) join states on (communities.belongsTo = 
-  states.stateID and communities.year = states.year)
-where states.name = x and person.year = y and mig = 2
 group by states.name;
 
 ------------------------------------------------------------------COMMUNITY MIGRATION--------------------------------------------------------
