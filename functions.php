@@ -21,6 +21,7 @@
     //Queries stored in $q
     $q = '';
 
+    //Count number of tuples in database
     if($check == 'tuplecount') {
         $q = "select
             (select count(household.serialno) from household)+
@@ -34,15 +35,14 @@
         oci_define_by_name($stid, 'TOTAL', $name);
         oci_execute($stid);
         
-        $data = $name;
-        oci_free_statement($stid);
+        while(oci_fetch($stid)) {
+            $data = $name;
+        }
 
-        //$data = 20;
+        oci_free_statement($stid);
         echo $data;
     }
-
-    //Fill in 'Area' dropdown based on Area Type
-    if($check == 'areatype') {
+    else if($check == 'areatype') { //Fill in 'Area' dropdown based on Area Type
         //$var1 is the name of the state we are using
         $q = "SELECT distinct communities.name 
                 FROM Communities, States 
@@ -73,6 +73,7 @@
         //$var3 is the first data series to compare
         //$var4 is the second data series to compare
 
+        //Get rid of year from the end of the string
         $var1 = substr($var1, 0, -5);
         $var2 = substr($var2, 0, -5);
 
@@ -81,7 +82,6 @@
         for($i = 0; $i <= 3; $i++) {
             $array1[$i] = performQueryCompare($var3, $var1, $year, $conn, $i, $array1);
             $year = $year + 1;
-            //echo $array1[$i];
         }
 
         //Getting values from second data series
@@ -89,16 +89,14 @@
         for($i = 0; $i <= 3; $i++) {
             $array2[$i] = performQueryCompare($var4, $var2, $year, $conn, $i, $array2);
             $year = $year + 1;
-            //echo $array2[$i];
         }
 
         //Do correlation
         $data = Correlation($array1, $array2);
-        // $data = $year;
         echo $data;
     }
 
-    //--------------------PERFORM QUERIES--------------------
+//-----------------------PERFORM QUERIES-------------------------
     function performQuery($var1, $var3, $var4, $conn) {
         if($var1 == 'Median Age') {
             $q = "";
@@ -496,6 +494,7 @@
         return $data;
     }
 
+//----------------------QUERIES TO COMPARE TWO SERIES-------------------------------------
     function performQueryCompare($dataseries, $areaname, $year, $conn, $i, $array) {
         if($dataseries == 'Median Age') {
             $q = "";
@@ -896,8 +895,7 @@
         return $array[$i];
     }
 
-
-    //CORRELATION FUNCTIONS
+//--------------------CORRELATION FUNCTIONS-----------------------
     function Correlation($arr1, $arr2) {        
         $correlation = 0;
 
@@ -979,7 +977,5 @@
     }
 
     // Close the Oracle connection
-    //oci_free_statement($stid);
     oci_close($conn);
-
 ?>

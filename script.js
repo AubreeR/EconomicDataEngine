@@ -231,12 +231,16 @@ $(document).on('click', '.compare', function() {
         });
 
         if(ds1 == "Fastest Growing Industry" || 
-            ds1 == "Most Spoken Foreign Language") {
-            alert("Cannot use data series '" + ds1 + "' to correlate because it is not a number");
+            ds1 == "Most Spoken Foreign Language" ||
+            (ds1 == "Average Age" && area1 == "Florida") ||
+            (ds1 == "Percentage of Migrants" && area1 == "Florida")) {
+            alert("Cannot use data series '" + ds1 + "' to correlate. Pick a different series!");
         }
         else if(ds2 == "Fastest Growing Industry" || 
-            ds2 == "Most Spoken Foreign Language") {
-            alert("Cannot use data series '" + ds2 + "' to correlate because it is not a number");
+            ds2 == "Most Spoken Foreign Language" ||
+            (ds2 == "Average Age" && area1 == "Florida") ||
+            (ds2 == "Percentage of Migrants" && area1 == "Florida")) {
+            alert("Cannot use data series '" + ds2 + "' to correlate. Pick a different series!");
         }
         else {
             $('.loader').show();
@@ -299,7 +303,6 @@ $(document).on('click', '.tuplecount', function() {
         }, 
         "text"
     );   
-    console.log(temp);
 
     $('.tuplecount').text(temp);   
 });
