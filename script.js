@@ -232,14 +232,14 @@ $(document).on('click', '.compare', function() {
 
         if(ds1 == "Fastest Growing Industry" || 
             ds1 == "Most Spoken Foreign Language" ||
-            (ds1 == "Average Age" && area1 == "Florida") ||
-            (ds1 == "Percentage of Migrants" && area1 == "Florida")) {
+            (ds1 == "Average Age" && area1.search("Florida") != -1) ||
+            (ds1 == "Percentage of Migrants" && area1.search("Florida") != -1)) {
             alert("Cannot use data series '" + ds1 + "' to correlate. Pick a different series!");
         }
         else if(ds2 == "Fastest Growing Industry" || 
             ds2 == "Most Spoken Foreign Language" ||
-            (ds2 == "Average Age" && area1 == "Florida") ||
-            (ds2 == "Percentage of Migrants" && area1 == "Florida")) {
+            (ds2 == "Average Age" && area2.search("Florida") != -1) ||
+            (ds2 == "Percentage of Migrants" && area2.search("Florida") != -1)) {
             alert("Cannot use data series '" + ds2 + "' to correlate. Pick a different series!");
         }
         else {
