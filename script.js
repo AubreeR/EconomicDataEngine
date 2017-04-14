@@ -292,6 +292,9 @@ $(document).on('click', '.remove', function() {
 
 $(document).on('click', '.tuplecount', function() {
    $('.loader').show();
+    var load = setTimeout(function() {
+        temp = "Try Again";
+    }, 60000);
 
    $.get("functions.php", 
         { 
@@ -299,12 +302,14 @@ $(document).on('click', '.tuplecount', function() {
         },
         function(data) { 
             temp = data;
+            clearTimeout(load);
             $('.loader').hide();
+            $('.tuplecount').text(temp);   
         }, 
         "text"
     );   
 
-    $('.tuplecount').text(temp);   
+    // $('.tuplecount').text(temp);   
 });
 
 
